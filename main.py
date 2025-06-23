@@ -2,12 +2,13 @@ import mlflow
 import os
 import hydra
 from omegaconf import DictConfig, OmegaConf
+from collections.abc import Sequence
 
 
 # This automatically reads in the configuration
-@hydra.main(config_name='config')
+@hydra.main(config_path="conf", config_name="config")
 def go(config: DictConfig):
-
+        
     # Setup the wandb experiment. All runs will be grouped under this name
     os.environ["WANDB_PROJECT"] = config["main"]["project_name"]
     os.environ["WANDB_RUN_GROUP"] = config["main"]["experiment_name"]
@@ -20,8 +21,10 @@ def go(config: DictConfig):
         # This was passed on the command line as a comma-separated list of steps
         steps_to_execute = config["main"]["execute_steps"].split(",")
     else:
-        assert isinstance(config["main"]["execute_steps"], list)
-        steps_to_execute = config["main"]["execute_steps"]
+        # OmegaConf list behaves like a Sequence but is not a Python list
+        assert isinstance(config["main"]["execute_steps"], Sequence)
+        steps_to_execute = list(config["main"]["execute_steps"])  # convert to regular list
+
 
     # Download step
     if "download" in steps_to_execute:

@@ -25,11 +25,24 @@ def go(args):
     logger.info("Dropping duplicates")
     df = df.drop_duplicates().reset_index(drop=True)
 
-    # A minimal feature engineering step: a new feature
-    logger.info("Feature engineering")
-    df['title'].fillna(value='', inplace=True)
-    df['song_name'].fillna(value='', inplace=True)
+    # Fill NaNs in 'title' and 'song_name' before creating text_feature
+    logger.info("Filling missing values in title and song_name")
+    df['title'].fillna('', inplace=True)
+    df['song_name'].fillna('', inplace=True)
+
+    # Create 'text_feature'
+    logger.info("Creating text feature")
     df['text_feature'] = df['title'] + ' ' + df['song_name']
+
+    # Drop rows with NaNs in critical numeric columns (like loudness)
+    logger.info("Dropping rows with missing values in important columns")
+    required_columns = [
+        'danceability', 'energy', 'loudness', 'speechiness',
+        'acousticness', 'instrumentalness', 'liveness',
+        'valence', 'tempo', 'duration_ms', 'key', 'time_signature', 'genre'
+    ]
+    df.dropna(subset=required_columns, inplace=True)
+
 
     filename = "processed_data.csv"
     df.to_csv(filename)
